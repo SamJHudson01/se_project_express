@@ -1,0 +1,35 @@
+{
+    "name": "se_project_express",
+    "version": "1.0.0",
+    "description": "Server for WTW",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lint": "npx eslint .",
+        "start": "node app.js",
+        "dev": "nodemon app.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SamJHudson01/se_project_express.git"
+    },
+    "author": "Sam Hudson",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/SamJHudson01/se_project_express/issues"
+    },
+    "homepage": "https://github.com/SamJHudson01/se_project_express#readme",
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongoose": "^6.9.0",
+        "validator": "^13.7.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.33.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-config-prettier": "^8.6.0",
+        "eslint-plugin-import": "^2.27.5",
+        "nodemon": "^2.0.20",
+        "prettier": "^2.8.3"
+    }
+}
