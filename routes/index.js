@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const errors = require("../utils/errors.js");
 
 const clothingItemsController = require("../controllers/clothingItems.js");
 const userController = require("../controllers/users.js");
@@ -13,7 +14,9 @@ router.post("/items", clothingItemsController.createClothingItem);
 router.delete("/items/:itemId", clothingItemsController.deleteClothingItem);
 
 router.use((req, res, next) => {
-    res.status(404).json({ message: "Requested resource not found" });
+    res.status(errors.NOT_FOUND).json({
+        message: "Requested resource not found",
+    });
 });
 
 module.exports = router;
