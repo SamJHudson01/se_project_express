@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const clothingItemsController = require("./clothingItems.js");
-const userController = require("./user.js");
+const clothingItemsController = require("../controllers/clothingItems.js");
+const userController = require("../controllers/users.js");
 
 router.get("/users", userController.getUsers);
 router.get("/users/:userId", userController.getUser);
