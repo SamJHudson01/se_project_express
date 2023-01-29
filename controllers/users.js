@@ -1,9 +1,10 @@
 const User = require("../models/user.js");
+const errors = require("../utils/errors.js");
 
 exports.getUsers = function (req, res) {
     User.find({}, function (err, users) {
         if (err) {
-            return res.status(500).send({ message: "Error getting users" });
+            return errors.handleError(err, res);
         }
         res.send(users);
     });
@@ -12,10 +13,12 @@ exports.getUsers = function (req, res) {
 exports.getUser = function (req, res) {
     User.findById(req.params.id, function (err, user) {
         if (err) {
-            return res.status(500).send({ message: "Error getting user" });
+            return errors.handleError(err, res);
         }
         if (!user) {
-            return res.status(404).send({ message: "User not found" });
+            return res
+                .status(errors.NOT_FOUND)
+                .send({ message: "User not found" });
         }
         res.send(user);
     });
@@ -26,7 +29,7 @@ exports.createUser = function (req, res) {
     console.log(req.body);
     user.save(function (err, user) {
         if (err) {
-            return res.status(500).send({ message: "Error creating user" });
+            return errors.handleError(err, res);
         }
         res.send(user);
     });

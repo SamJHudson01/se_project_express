@@ -10,6 +10,13 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    req.user = {
+        _id: "63d6be2a606a5d75ce7f6d14",
+    };
+    next();
+});
+
 app.use("/", indexRoutes);
 
 app.listen(PORT, () => {
