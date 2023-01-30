@@ -1,6 +1,6 @@
 const express = require("express");
 const ClothingItem = require("../models/clothingItem");
-const errors = require("..utils//errors.js");
+const errors = require("../utils/errors");
 
 const router = express.Router();
 
