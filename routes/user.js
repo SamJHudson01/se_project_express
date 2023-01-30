@@ -1,7 +1,7 @@
 const express = require("express");
 
 const router = express.Router();
-const User = require("../models/User");
+const User = require("../models/user");
 const errors = require("../utils/errors");
 
 // Get all users
@@ -13,6 +13,7 @@ router.get("/", (req, res) => {
 
 // Get a specific user by id
 router.get("/:id", (req, res) => {
+    /* eslint-disable consistent-return */
     User.findById(req.params.id)
         .then((user) => {
             if (!user)
