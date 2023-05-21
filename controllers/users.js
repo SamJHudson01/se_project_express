@@ -79,3 +79,41 @@ exports.login = async function (req, res) {
         res.status(401).send("Invalid login credentials");
     }
 };
+
+exports.getCurrentUser = async function (req, res) {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+        res.send(user);
+    } catch (err) {
+        res.status(500).send("There was a problem retrieving the user");
+    }
+};
+
+exports.updateUser = async function (req, res) {
+    const updates = Object.keys(req.body);
+    const allowedUpdates = ["name", "email", "password", "avatar"];
+    const isValidOperation = updates.every((update) =>
+        allowedUpdates.includes(update)
+    );
+
+    if (!isValidOperation) {
+        return res.status(400).send({ error: "Invalid updates!" });
+    }
+
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send();
+        }
+
+        updates.forEach((update) => (user[update] = req.body[update]));
+        await user.save(); // this will run the validators
+
+        res.send(user);
+    } catch (err) {
+        res.status(400).send(err);
+    }
+};
