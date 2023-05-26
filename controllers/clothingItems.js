@@ -14,20 +14,29 @@ exports.createClothingItem = (req, res) => {
         .catch((error) => errors.handleError(error, res));
 };
 
-exports.deleteClothingItem = (req, res) => {
-    ClothingItem.findOneAndRemove({
-        _id: req.params.itemId,
-        owner: req.user._id,
-    })
-        .orFail(() =>
-            res
-                .status(errors.NOT_FOUND)
-                .send({ message: "Requested resource not found" })
-        )
-        .then((item) =>
-            res.status(200).send({ message: `${item} Successfully deleted` })
-        )
-        .catch((error) => errors.handleError(error, res));
+exports.deleteClothingItem = async (req, res) => {
+    try {
+        const item = await ClothingItem.findById(req.params.itemId);
+        if (!item) {
+            return res
+                .status(404)
+                .send({ message: "Requested resource not found" });
+        }
+
+        if (String(item.owner) !== String(req.user._id)) {
+            return res
+                .status(403)
+                .send({
+                    message:
+                        "User does not have permission to delete this item",
+                });
+        }
+
+        await ClothingItem.findByIdAndRemove(req.params.itemId);
+        res.status(200).send({ message: `${item} Successfully deleted` });
+    } catch (error) {
+        errors.handleError(error, res);
+    }
 };
 
 exports.likeItem = (req, res) => {

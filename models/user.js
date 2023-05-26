@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
+        select: false, // this will prevent password from being returned by default
     },
 });
 

@@ -33,7 +33,9 @@ exports.createUser = async function (req, res) {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        return res.status(400).send("User with this email already exists");
+        return res
+            .status(400)
+            .json({ message: "User with this email already exists" });
     }
 
     try {
@@ -47,17 +49,21 @@ exports.createUser = async function (req, res) {
 
         user.save()
             .then((user) => {
-                res.send(user._id);
+                res.status(201).json({ userId: user._id });
             })
             .catch((err) => {
-                if (err.code === 11000) {
-                    return res.status(400).send("Duplicate value");
+                if (err.name === "ValidationError") {
+                    return res.status(400).json({ message: err.message });
+                } else if (err.code === 11000) {
+                    return res.status(400).json({ message: "Duplicate value" });
                 } else {
-                    return res.status(500).send("User creation failed");
+                    return res
+                        .status(500)
+                        .json({ message: "User creation failed" });
                 }
             });
     } catch (err) {
-        res.status(500).send(err.message);
+        res.status(500).json({ message: err.message });
     }
 };
 
@@ -65,8 +71,13 @@ exports.login = async function (req, res) {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findUserByCredentials(email, password);
+        const user = await User.findOne({ email }).select("+password");
         if (!user) {
+            return res.status(401).send("Invalid login credentials");
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
             return res.status(401).send("Invalid login credentials");
         }
 
