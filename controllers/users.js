@@ -1,130 +1,142 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const errors = require("../utils/errors");
-const bcrypt = require("bcrypt");
-const saltRounds = 10;
-const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
 
-exports.getUsers = function (req, res) {
-    /* eslint-disable consistent-return */
+const saltRounds = 10;
+
+exports.getUsers = function getUsers(req, res) {
     User.find({})
         .orFail(new Error("Users not found"))
         .exec((err, users) => {
             if (err) {
                 return errors.handleError(err, res);
             }
-            res.send(users);
+            return res.send(users);
         });
 };
 
-exports.getUser = function (req, res) {
+exports.getUser = function getUser(req, res) {
     User.findById(req.params.id)
         .orFail(new Error("User not found"))
         .exec((err, user) => {
             if (err) {
                 return errors.handleError(err, res);
             }
-            res.send(user);
+            return res.send(user);
         });
 };
 
-exports.createUser = async function (req, res) {
+exports.createUser = async function createUser(req, res) {
     const { name, avatar, email, password } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        return res
-            .status(400)
-            .json({ message: "User with this email already exists" });
-    }
-
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const user = new User({
+        const userInstance = new User({
             name,
             avatar,
             email,
             password: hashedPassword,
         });
 
-        user.save()
-            .then((user) => {
-                res.status(201).json({ userId: user._id });
-            })
-            .catch((err) => {
-                if (err.name === "ValidationError") {
-                    return res.status(400).json({ message: err.message });
-                } else if (err.code === 11000) {
-                    return res.status(400).json({ message: "Duplicate value" });
-                } else {
-                    return res
-                        .status(500)
-                        .json({ message: "User creation failed" });
-                }
-            });
+        const savedUser = await userInstance.save();
+        return res.status(errors.httpStatusCodes.CREATED).json({
+            userId: savedUser._id,
+        });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        if (err.name === "ValidationError") {
+            return res
+                .status(errors.httpStatusCodes.BAD_REQUEST)
+                .json({ message: err.message });
+        }
+        if (err.code === 11000) {
+            return res
+                .status(errors.httpStatusCodes.CONFLICT)
+                .json({ message: "Duplicate value" });
+        }
+        return res
+            .status(errors.httpStatusCodes.INTERNAL_SERVER_ERROR)
+            .json({ message: "User creation failed" });
     }
 };
 
-exports.login = async function (req, res) {
+exports.login = async function loginUser(req, res) {
     const { email, password } = req.body;
-
     try {
         const user = await User.findOne({ email }).select("+password");
+
         if (!user) {
-            return res.status(401).send("Invalid login credentials");
+            return res
+                .status(errors.httpStatusCodes.UNAUTHORIZED)
+                .json({ message: "Invalid login credentials" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) {
-            return res.status(401).send("Invalid login credentials");
+            return res
+                .status(errors.httpStatusCodes.UNAUTHORIZED)
+                .json({ message: "Invalid login credentials" });
         }
 
         const token = jwt.sign({ _id: user._id.toString() }, JWT_SECRET, {
             expiresIn: "7d",
         });
 
-        res.send({ token });
+        return res.send({ token });
     } catch (err) {
-        res.status(401).send("Invalid login credentials");
+        return res.status(errors.httpStatusCodes.UNAUTHORIZED).json({
+            message: "Invalid login credentials",
+        });
     }
 };
 
-exports.getCurrentUser = async function (req, res) {
+exports.getCurrentUser = async function getCurrentUser(req, res) {
     try {
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).send("User not found");
+            return res
+                .status(errors.httpStatusCodes.NOT_FOUND)
+                .json({ message: "User not found" });
         }
-        res.send(user);
+        return res.send(user);
     } catch (err) {
-        res.status(500).send("There was a problem retrieving the user");
+        return res.status(errors.httpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: "There was a problem retrieving the user",
+        });
     }
 };
 
-exports.updateUser = async function (req, res) {
+exports.updateUser = async function updateUser(req, res) {
     const updates = Object.keys(req.body);
-    const allowedUpdates = ["name", "email", "password", "avatar"];
+    const allowedUpdates = ["name", "avatar"];
     const isValidOperation = updates.every((update) =>
         allowedUpdates.includes(update)
     );
 
     if (!isValidOperation) {
-        return res.status(400).send({ error: "Invalid updates!" });
+        return res
+            .status(errors.httpStatusCodes.BAD_REQUEST)
+            .json({ message: "Invalid updates!" });
     }
 
     try {
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).send();
+            return res
+                .status(errors.httpStatusCodes.NOT_FOUND)
+                .json({ message: "User not found" });
         }
 
-        updates.forEach((update) => (user[update] = req.body[update]));
-        await user.save(); // this will run the validators
+        updates.forEach((update) => {
+            user[update] = req.body[update];
+        });
+        await user.save();
 
-        res.send(user);
+        return res.send(user);
     } catch (err) {
-        res.status(400).send(err);
+        return res
+            .status(errors.httpStatusCodes.BAD_REQUEST)
+            .json({ message: err.message });
     }
 };

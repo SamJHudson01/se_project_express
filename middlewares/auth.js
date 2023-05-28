@@ -1,12 +1,16 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
 
+const httpStatusCodes = {
+    UNAUTHORIZED: 401,
+};
+
 module.exports = (req, res, next) => {
     try {
-        const authorization = req.headers.authorization;
+        const { authorization } = req.headers;
         if (!authorization) {
             return res
-                .status(401)
+                .status(httpStatusCodes.UNAUTHORIZED)
                 .send({ message: "No authorization header present" });
         }
 
@@ -14,8 +18,10 @@ module.exports = (req, res, next) => {
         const payload = jwt.verify(token, JWT_SECRET);
 
         req.user = payload;
-        next();
+        return next();
     } catch (err) {
-        res.status(401).send({ message: "Invalid or expired token" });
+        return res.status(httpStatusCodes.UNAUTHORIZED).send({
+            message: "Invalid or expired token",
+        });
     }
 };
