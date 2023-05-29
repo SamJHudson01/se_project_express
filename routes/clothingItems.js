@@ -1,6 +1,10 @@
+// I don't HAVE an items.js file - please can you be more clear with your feedback?
+// --------------------------------------------------------------------------------
+
 const express = require("express");
 
 const router = express.Router();
+
 const ClothingItem = require("../models/clothingItem");
 
 const errors = require("../utils/errors");

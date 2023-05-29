@@ -1,21 +1,17 @@
 const express = require("express");
-const userController = require("../controllers/users");
 
 const router = express.Router();
 const errors = require("../utils/errors");
+const userController = require("../controllers/users");
 
-const clothingItemsController = require("../controllers/clothingItems");
+const userRoutes = require("./user");
+const itemRoutes = require("./clothingItems");
 
-router.get("/users", userController.getUsers);
-router.get("/users/:userId", userController.getUser);
-router.post("/users", userController.createUser);
+router.post("/signin", userController.login);
+router.post("/signup", userController.createUser);
 
-router.get("/items", clothingItemsController.getClothingItems);
-router.post("/items", clothingItemsController.createClothingItem);
-router.delete("/items/:itemId", clothingItemsController.deleteClothingItem);
-
-// router.post("/signin", userController.login);
-// router.post("/signup", userController.createUser);
+router.use("/users", userRoutes);
+router.use("/items", itemRoutes);
 
 router.use((req, res) => {
     res.status(errors.NOT_FOUND).json({
