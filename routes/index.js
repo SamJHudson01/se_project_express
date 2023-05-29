@@ -14,7 +14,7 @@ router.use("/users", userRoutes);
 router.use("/items", itemRoutes);
 
 router.use((req, res) => {
-    res.status(errors.NOT_FOUND).json({
+    res.status(errors.httpStatusCodes.NOT_FOUND).json({
         message: "Requested resource not found",
     });
 });

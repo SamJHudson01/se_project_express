@@ -6,28 +6,6 @@ const { JWT_SECRET } = require("../utils/config");
 
 const saltRounds = 10;
 
-exports.getUsers = function getUsers(req, res) {
-    User.find({})
-        .orFail(new Error("Users not found"))
-        .exec((err, users) => {
-            if (err) {
-                return errors.handleError(err, res);
-            }
-            return res.send(users);
-        });
-};
-
-exports.getUser = function getUser(req, res) {
-    User.findById(req.params.id)
-        .orFail(new Error("User not found"))
-        .exec((err, user) => {
-            if (err) {
-                return errors.handleError(err, res);
-            }
-            return res.send(user);
-        });
-};
-
 exports.createUser = async function createUser(req, res) {
     const { name, avatar, email, password } = req.body;
     try {
@@ -62,6 +40,7 @@ exports.createUser = async function createUser(req, res) {
 
 exports.login = async function loginUser(req, res) {
     const { email, password } = req.body;
+
     try {
         const user = await User.findOne({ email }).select("+password");
 
@@ -85,9 +64,7 @@ exports.login = async function loginUser(req, res) {
 
         return res.send({ token });
     } catch (err) {
-        return res.status(errors.httpStatusCodes.UNAUTHORIZED).json({
-            message: "Invalid login credentials",
-        });
+        return errors.handleError(err, res);
     }
 };
 
@@ -110,6 +87,7 @@ exports.getCurrentUser = async function getCurrentUser(req, res) {
 exports.updateUser = async function updateUser(req, res) {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "avatar"];
+
     const isValidOperation = updates.every((update) =>
         allowedUpdates.includes(update)
     );
@@ -122,6 +100,7 @@ exports.updateUser = async function updateUser(req, res) {
 
     try {
         const user = await User.findById(req.user._id);
+
         if (!user) {
             return res
                 .status(errors.httpStatusCodes.NOT_FOUND)
@@ -131,12 +110,11 @@ exports.updateUser = async function updateUser(req, res) {
         updates.forEach((update) => {
             user[update] = req.body[update];
         });
+
         await user.save();
 
         return res.send(user);
     } catch (err) {
-        return res
-            .status(errors.httpStatusCodes.BAD_REQUEST)
-            .json({ message: err.message });
+        return errors.handleError(err, res);
     }
 };

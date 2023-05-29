@@ -24,7 +24,7 @@ exports.deleteClothingItem = async (req, res) => {
         }
 
         if (String(item.owner) !== String(req.user._id)) {
-            return res.status(errors.httpStatusCodes.UNAUTHORIZED).send({
+            return res.status(errors.httpStatusCodes.FORBIDDEN).send({
                 message: "User does not have permission to delete this item",
             });
         }
@@ -44,7 +44,15 @@ exports.likeItem = (req, res) => {
         { $addToSet: { likes: req.user._id } },
         { new: true }
     )
-        .then((item) => res.status(errors.httpStatusCodes.OK).send(item))
+        .then((item) => {
+            if (!item) {
+                return res
+                    .status(errors.httpStatusCodes.NOT_FOUND)
+                    .send({ message: "Requested resource not found" });
+            }
+
+            return res.status(errors.httpStatusCodes.OK).send(item);
+        })
         .catch((error) => errors.handleError(error, res));
 };
 
@@ -54,6 +62,14 @@ exports.dislikeItem = (req, res) => {
         { $pull: { likes: req.user._id } },
         { new: true }
     )
-        .then((item) => res.status(errors.httpStatusCodes.OK).send(item))
+        .then((item) => {
+            if (!item) {
+                return res
+                    .status(errors.httpStatusCodes.NOT_FOUND)
+                    .send({ message: "Requested resource not found" });
+            }
+
+            return res.status(errors.httpStatusCodes.OK).send(item);
+        })
         .catch((error) => errors.handleError(error, res));
 };
