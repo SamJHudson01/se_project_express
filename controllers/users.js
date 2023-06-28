@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const errors = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
+const { BadRequestError, UnauthorizedError, NotFoundError, ConflictError } =
+    errors;
 
 const saltRounds = 10;
 
@@ -23,18 +25,12 @@ exports.createUser = async function createUser(req, res) {
         });
     } catch (err) {
         if (err.name === "ValidationError") {
-            return res
-                .status(errors.httpStatusCodes.BAD_REQUEST)
-                .json({ message: err.message });
+            throw new BadRequestError(err.message);
         }
         if (err.code === 11000) {
-            return res
-                .status(errors.httpStatusCodes.CONFLICT)
-                .json({ message: "Duplicate value" });
+            throw new ConflictError("Duplicate value");
         }
-        return res
-            .status(errors.httpStatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ message: "User creation failed" });
+        throw new Error("User creation failed");
     }
 };
 
@@ -44,18 +40,8 @@ exports.login = async function loginUser(req, res) {
     try {
         const user = await User.findOne({ email }).select("+password");
 
-        if (!user) {
-            return res
-                .status(errors.httpStatusCodes.UNAUTHORIZED)
-                .json({ message: "Invalid login credentials" });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res
-                .status(errors.httpStatusCodes.UNAUTHORIZED)
-                .json({ message: "Invalid login credentials" });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            throw new UnauthorizedError("Invalid login credentials");
         }
 
         const token = jwt.sign({ _id: user._id.toString() }, JWT_SECRET, {
@@ -72,15 +58,11 @@ exports.getCurrentUser = async function getCurrentUser(req, res) {
     try {
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res
-                .status(errors.httpStatusCodes.NOT_FOUND)
-                .json({ message: "User not found" });
+            throw new NotFoundError("User not found");
         }
         return res.send(user);
     } catch (err) {
-        return res.status(errors.httpStatusCodes.INTERNAL_SERVER_ERROR).json({
-            message: "There was a problem retrieving the user",
-        });
+        return errors.handleError(err, res);
     }
 };
 
@@ -93,18 +75,14 @@ exports.updateUser = async function updateUser(req, res) {
     );
 
     if (!isValidOperation) {
-        return res
-            .status(errors.httpStatusCodes.BAD_REQUEST)
-            .json({ message: "Invalid updates!" });
+        throw new BadRequestError("Invalid updates!");
     }
 
     try {
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            return res
-                .status(errors.httpStatusCodes.NOT_FOUND)
-                .json({ message: "User not found" });
+            throw new NotFoundError("User not found");
         }
 
         updates.forEach((update) => {

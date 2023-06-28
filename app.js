@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const errorHandler = require("./middlewares/error-handler");
 
 const mainRoutes = require("./routes");
 
@@ -16,6 +17,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use("/", mainRoutes);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     // eslint-disable-next-line no-console

@@ -6,6 +6,7 @@ const httpStatusCodes = {
 };
 
 module.exports = (req, res, next) => {
+    console.log("Received headers on server:", req.headers);
     try {
         const { authorization } = req.headers;
         if (!authorization) {

@@ -1,5 +1,6 @@
 const errors = require("../utils/errors");
 const ClothingItem = require("../models/clothingItem");
+const { ForbiddenError, NotFoundError } = errors;
 
 exports.getClothingItems = (req, res) => {
     ClothingItem.find()
@@ -18,15 +19,13 @@ exports.deleteClothingItem = async (req, res) => {
     try {
         const item = await ClothingItem.findById(req.params.itemId);
         if (!item) {
-            return res
-                .status(errors.httpStatusCodes.NOT_FOUND)
-                .send({ message: "Requested resource not found" });
+            throw new NotFoundError("Requested resource not found");
         }
 
         if (String(item.owner) !== String(req.user._id)) {
-            return res.status(errors.httpStatusCodes.FORBIDDEN).send({
-                message: "User does not have permission to delete this item",
-            });
+            throw new ForbiddenError(
+                "User does not have permission to delete this item"
+            );
         }
 
         await ClothingItem.findByIdAndRemove(req.params.itemId);
@@ -46,9 +45,7 @@ exports.likeItem = (req, res) => {
     )
         .then((item) => {
             if (!item) {
-                return res
-                    .status(errors.httpStatusCodes.NOT_FOUND)
-                    .send({ message: "Requested resource not found" });
+                throw new NotFoundError("Requested resource not found");
             }
 
             return res.status(errors.httpStatusCodes.OK).send(item);
@@ -64,9 +61,7 @@ exports.dislikeItem = (req, res) => {
     )
         .then((item) => {
             if (!item) {
-                return res
-                    .status(errors.httpStatusCodes.NOT_FOUND)
-                    .send({ message: "Requested resource not found" });
+                throw new NotFoundError("Requested resource not found");
             }
 
             return res.status(errors.httpStatusCodes.OK).send(item);

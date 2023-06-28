@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
             "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/wtwr-project/Elise.png", // default value
         validate: {
             validator(value) {
+                if (value === null) {
+                    return true;
+                }
                 return validator.isURL(value);
             },
             message: "You must enter a valid URL",
