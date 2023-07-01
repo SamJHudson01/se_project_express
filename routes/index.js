@@ -7,7 +7,7 @@ const {
     validateUserBody,
     validateAuthBody,
     validateId,
-} = require("../middlewares/validator");
+} = require("../middlewares/validation");
 
 const userRoutes = require("./user");
 const itemRoutes = require("./clothingItems");
