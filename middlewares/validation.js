@@ -33,7 +33,11 @@ module.exports.validateId = celebrate({
             .length(24)
             .hex()
             .required()
-            .message("Invalid itemId"),
+            .messages({
+                "string.length": 'The "itemId" field must be 24 characters long',
+                "string.hex": 'The "itemId" field must be a hexadecimal value',
+                "string.empty": 'The "itemId" field must be filled in',
+            }),
     }),
 });
 
@@ -54,9 +58,12 @@ module.exports.validateUserBody = celebrate({
             "string.empty": 'The "email" field must be filled in',
         }),
         password: Joi.string()
-            .required()
-            .message('The "password" field must be filled in'),
+        .required()
+        .messages({
+            'any.required': 'The "password" field must be filled in',
+        }),
     }),
+    
 });
 
 // Function to validate user authentication
@@ -68,7 +75,9 @@ module.exports.validateAuthBody = celebrate({
         }),
         password: Joi.string()
             .required()
-            .message('The "password" field must be filled in'),
+            .messages({
+                'any.required': 'The "password" field must be filled in',
+            }),
     }),
 });
 
