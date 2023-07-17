@@ -1,5 +1,6 @@
-const { Joi, celebrate } = require("celebrate");
+const { Joi, celebrate} = require("celebrate");
 const validator = require("validator");
+
 
 // Function to validate URL
 const validateURL = (value, helpers) => {
@@ -23,8 +24,12 @@ module.exports.validateCardBody = celebrate({
             "string.empty": 'The "imageUrl" field must be filled in',
             "string.uri": 'The "imageUrl" field must be a valid url',
         }),
+        weather: Joi.string().required().messages({
+            "string.empty": 'The "weather" field must be filled in',
+        }),
     }),
 });
+
 
 // Validation function for clothing item's id
 module.exports.validateId = celebrate({

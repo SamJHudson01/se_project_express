@@ -2,10 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { errors } = require("celebrate");
-const errorHandler = require("./middlewares/error-handler");
-const { requestLogger, errorLogger } = require('./middlewares/logger'); 
-
+const { errors, CelebrateError } = require("celebrate");
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const mainRoutes = require("./routes");
 
@@ -24,7 +22,22 @@ app.use("/", mainRoutes);
 
 app.use(errorLogger);
 app.use(errors());
-app.use(errorHandler);
+
+// Update your errorHandler
+app.use((err, req, res, next) => {
+    if (err instanceof CelebrateError) {
+        console.error(err.details);
+        res.status(400).send({
+            message: "Validation failed",
+            errors: err.details,
+        });
+    } else {
+        // Handle other errors here
+        res.status(500).send({
+            message: "Internal server error",
+        });
+    }
+});
 
 app.listen(PORT, () => {
     // eslint-disable-next-line no-console
