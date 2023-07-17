@@ -1,14 +1,20 @@
+/* eslint-disable consistent-return */
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+
 const errors = require("../utils/errors");
+
 const { JWT_SECRET } = require("../utils/config");
+
 const { BadRequestError, UnauthorizedError, NotFoundError, ConflictError } =
     errors;
 
 const saltRounds = 10;
 
-exports.createUser = async function createUser(req, res) {
+
+
+exports.createUser = async function createUser(req, res, next) { // make sure to have `next` here
     const { name, avatar, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -25,23 +31,25 @@ exports.createUser = async function createUser(req, res) {
         });
     } catch (err) {
         if (err.name === "ValidationError") {
-            throw new BadRequestError(err.message);
+            next(new BadRequestError(err.message));  // use next instead of throw
+        } else if (err.code === 11000) {
+            next(new ConflictError("Duplicate value"));  // use next instead of throw
+        } else {
+            next(new Error("User creation failed"));  // use next instead of throw
         }
-        if (err.code === 11000) {
-            throw new ConflictError("Duplicate value");
-        }
-        throw new Error("User creation failed");
     }
 };
 
-exports.login = async function loginUser(req, res) {
+
+exports.login = async function loginUser(req, res, next) {
     const { email, password } = req.body;
 
     try {
         const user = await User.findOne({ email }).select("+password");
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new UnauthorizedError("Invalid login credentials");
+            next(new UnauthorizedError("Invalid login credentials"));
+            return;
         }
 
         const token = jwt.sign({ _id: user._id.toString() }, JWT_SECRET, {
@@ -50,23 +58,24 @@ exports.login = async function loginUser(req, res) {
 
         return res.send({ token });
     } catch (err) {
-        return errors.handleError(err, res);
+        next(err);
     }
 };
 
-exports.getCurrentUser = async function getCurrentUser(req, res) {
+exports.getCurrentUser = async function getCurrentUser(req, res, next) {
     try {
         const user = await User.findById(req.user._id);
         if (!user) {
-            throw new NotFoundError("User not found");
+            next(new NotFoundError("User not found"));
+            return;
         }
         return res.send(user);
     } catch (err) {
-        return errors.handleError(err, res);
+        next(err);
     }
 };
 
-exports.updateUser = async function updateUser(req, res) {
+exports.updateUser = async function updateUser(req, res, next) {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "avatar"];
 
@@ -75,14 +84,16 @@ exports.updateUser = async function updateUser(req, res) {
     );
 
     if (!isValidOperation) {
-        throw new BadRequestError("Invalid updates!");
+        next(new BadRequestError("Invalid updates!"));
+        return;
     }
 
     try {
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            throw new NotFoundError("User not found");
+            next(new NotFoundError("User not found"));
+            return;
         }
 
         updates.forEach((update) => {
@@ -93,6 +104,6 @@ exports.updateUser = async function updateUser(req, res) {
 
         return res.send(user);
     } catch (err) {
-        return errors.handleError(err, res);
+        next(err);
     }
 };
