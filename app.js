@@ -18,6 +18,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
+
+app.get('/crash-test', () => {
+    setTimeout(() => {
+      throw new Error('Server will crash now');
+    }, 0);
+  }); 
+
 app.use("/", mainRoutes);
 
 app.use(errorLogger);
