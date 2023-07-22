@@ -1,28 +1,26 @@
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../utils/config");
+const jwt = require("jsonwebtoken"); 
+const { JWT_SECRET } = require("../utils/config"); 
+const { UnauthorizedError } = require("../utils/errors/httpErrors");
 
-const httpStatusCodes = {
-    UNAUTHORIZED: 401,
-};
+module.exports = (req, _, next) => {
+    console.log("Received headers on server:", req.headers); 
 
-module.exports = (req, res, next) => {
-    console.log("Received headers on server:", req.headers);
     try {
-        const { authorization } = req.headers;
+        const { authorization } = req.headers; 
+
         if (!authorization) {
-            return res
-                .status(httpStatusCodes.UNAUTHORIZED)
-                .send({ message: "No authorization header present" });
+            throw new UnauthorizedError("No authorization header present");
         }
 
-        const token = authorization.replace("Bearer ", "");
-        const payload = jwt.verify(token, JWT_SECRET);
+        const token = authorization.replace("Bearer ", ""); 
+        const payload = jwt.verify(token, JWT_SECRET); 
 
-        req.user = payload;
-        return next();
-    } catch (err) {
-        return res.status(httpStatusCodes.UNAUTHORIZED).send({
-            message: "Invalid or expired token",
-        });
+        req.user = payload; 
+        next(); 
+    } catch (err) { 
+        if (err instanceof jwt.JsonWebTokenError) {
+            throw new UnauthorizedError("Invalid or expired token");
+        }
+        next(err);
     }
 };
